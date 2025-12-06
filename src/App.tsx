@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Cake } from "./models/cake";
 import { Candle } from "./models/candle";
 import { Table } from "./models/table";
-import { PictureFrame } from "./models/pictureFrame";
+import { SimplePictureFrame } from "./models/simplePictureFrame"; // CHANGED
 import { BirthdayCard } from "./components/BirthdayCard";
 import { Fireworks } from "./components/Fireworks";
 
@@ -15,7 +15,7 @@ import "./App.css";
 // -------------------
 // Error Boundary
 // -------------------
-class ErrorBoundary extends React.Component<
+class ErrorBoundary extends React.Component
   { children: React.ReactNode },
   { hasError: boolean }
 > {
@@ -189,7 +189,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="App">
-        <div className="background-overlay">
+        {/* CHANGED: Added fade-out class */}
+        <div className={`background-overlay ${sceneStarted ? 'fade-out' : ''}`}>
           <div className="typed-text">
             {typedLines.map((line, index) => {
               const showCursor = cursorVisible && index === cursorLineIndex && !typingComplete;
@@ -204,7 +205,41 @@ export default function App() {
                 <Table />
                 <Cake />
                 <Candle isLit={isCandleLit} scale={0.25} position={[0, 1.1, 0]} />
-                <PictureFrame image="/frame1.jpg" position={[0, 0.735, 0]} rotation={[0, 0, 0]} scale={0.75} />
+                
+                {/* CHANGED: Using SimplePictureFrame - 4 frames on table */}
+                <SimplePictureFrame 
+                  image="/frame1.jpg" 
+                  position={[-0.8, 1.2, -0.5]}
+                  rotation={[0, 0.3, 0]} 
+                  scale={0.4}
+                  frameWidth={1}
+                  frameHeight={0.75}
+                />
+                <SimplePictureFrame 
+                  image="/frame1.jpg" 
+                  position={[0.8, 1.2, -0.5]}
+                  rotation={[0, -0.3, 0]} 
+                  scale={0.4}
+                  frameWidth={1}
+                  frameHeight={0.75}
+                />
+                <SimplePictureFrame 
+                  image="/frame1.jpg" 
+                  position={[-0.8, 1.2, 0.5]}
+                  rotation={[0, 0.5, 0]} 
+                  scale={0.4}
+                  frameWidth={1}
+                  frameHeight={0.75}
+                />
+                <SimplePictureFrame 
+                  image="/frame1.jpg" 
+                  position={[0.8, 1.2, 0.5]}
+                  rotation={[0, -0.5, 0]} 
+                  scale={0.4}
+                  frameWidth={1}
+                  frameHeight={0.75}
+                />
+                
                 {BIRTHDAY_CARDS.map((card) => (
                   <BirthdayCard
                     key={card.id}
