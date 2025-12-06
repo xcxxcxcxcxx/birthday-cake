@@ -1,5 +1,6 @@
+import React, { Component, ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
+import { Environment, OrbitControls, Html } from "@react-three/drei";
 import {
   Suspense,
   useCallback,
@@ -27,6 +28,9 @@ const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
+/* -----------------------------
+   Animation / scene constants
+   ----------------------------- */
 type AnimatedSceneProps = {
   isPlaying: boolean;
   onBackgroundFadeChange?: (opacity: number) => void;
@@ -76,6 +80,9 @@ const BACKGROUND_FADE_START = Math.max(
   0
 );
 
+/* -----------------------------
+   Typing lines (starting text)
+   ----------------------------- */
 const TYPED_LINES = [
   "> asma",
   "...",
@@ -83,7 +90,7 @@ const TYPED_LINES = [
   "...",
   "> so i made you this, hope you like it",
   "...",
-  "with love <3"
+  "with love <3",
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
@@ -96,15 +103,19 @@ type BirthdayCardConfig = {
   rotation: [number, number, number];
 };
 
+/* Keep filenames unchanged — using absolute paths (root relative) */
 const BIRTHDAY_CARDS: ReadonlyArray<BirthdayCardConfig> = [
   {
     id: "confetti",
     image: "/card.png",
     position: [1, 0.081, -2],
-    rotation: [-Math.PI / 2 , 0, Math.PI / 3],
-  }
+    rotation: [-Math.PI / 2, 0, Math.PI / 3],
+  },
 ];
 
+/* -----------------------------
+   AnimatedScene component
+   ----------------------------- */
 function AnimatedScene({
   isPlaying,
   onBackgroundFadeChange,
@@ -256,30 +267,10 @@ function AnimatedScene({
     <>
       <group ref={tableGroup}>
         <Table />
-        <PictureFrame
-          image="/frame2.jpg"
-          position={[0, 0.735, 3]}
-          rotation={[0, 5.6, 0]}
-          scale={0.75}
-        />
-        <PictureFrame
-          image="/frame3.jpg"
-          position={[0, 0.735, -3]}
-          rotation={[0, 4.0, 0]}
-          scale={0.75}
-        />
-        <PictureFrame
-          image="/frame4.jpg"
-          position={[-1.5, 0.735, 2.5]}
-          rotation={[0, 5.4, 0]}
-          scale={0.75}
-        />
-        <PictureFrame
-          image="/frame1.jpg"
-          position={[-1.5, 0.735, -2.5]}
-          rotation={[0, 4.2, 0]}
-          scale={0.75}
-        />
+        <PictureFrame image="/frame2.jpg" position={[0, 0.735, 3]} rotation={[0, 5.6, 0]} scale={0.75} />
+        <PictureFrame image="/frame3.jpg" position={[0, 0.735, -3]} rotation={[0, 4.0, 0]} scale={0.75} />
+        <PictureFrame image="/frame4.jpg" position={[-1.5, 0.735, 2.5]} rotation={[0, 5.4, 0]} scale={0.75} />
+        <PictureFrame image="/frame1.jpg" position={[-1.5, 0.735, -2.5]} rotation={[0, 4.2, 0]} scale={0.75} />
         {cards.map((card) => (
           <BirthdayCard
             key={card.id}
@@ -302,6 +293,7 @@ function AnimatedScene({
   );
 }
 
+/* Orbit controls setup (unchanged) */
 function ConfiguredOrbitControls() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const camera = useThree((state) => state.camera);
@@ -336,13 +328,11 @@ function ConfiguredOrbitControls() {
   );
 }
 
+/* Helper to set scene.backgroundIntensity when available */
 type EnvironmentBackgroundControllerProps = {
   intensity: number;
 };
-
-function EnvironmentBackgroundController({
-  intensity,
-}: EnvironmentBackgroundControllerProps) {
+function EnvironmentBackgroundController({ intensity }: EnvironmentBackgroundControllerProps) {
   const scene = useThree((state) => state.scene);
 
   useEffect(() => {
@@ -355,6 +345,40 @@ function EnvironmentBackgroundController({
   return null;
 }
 
+/* -----------------------------
+   Error Boundary (shows UI and logs)
+   ----------------------------- */
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error?: any }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: undefined };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, info: any) {
+    console.error("ErrorBoundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
+          <h2>Something went wrong while loading the scene.</h2>
+          <p>Open the browser console (F12) to see the exact error.</p>
+          <pre style={{ whiteSpace: "pre-wrap", color: "#f88" }}>{String(this.state.error)}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* -----------------------------
+   App (root)
+   ----------------------------- */
 export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [backgroundOpacity, setBackgroundOpacity] = useState(1);
@@ -368,6 +392,38 @@ export default function App() {
   const [fireworksActive, setFireworksActive] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  /* -- Preflight asset check: tries to fetch key public assets and logs clear errors if missing -- */
+  useEffect(() => {
+    const assetsToCheck = [
+      "/cake.glb",
+      "/candle.glb",
+      "/table.glb",
+      "/picture_frame.glb",
+      "/shanghai_bund_4k.hdr",
+      "/card.png",
+      "/frame1.jpg",
+      "/frame2.jpg",
+      "/frame3.jpg",
+      "/frame4.jpg",
+      "/music.mp3",
+    ];
+
+    (async () => {
+      for (const asset of assetsToCheck) {
+        try {
+          const res = await fetch(asset, { method: "HEAD" });
+          if (!res.ok) {
+            console.warn(`Asset check failed: ${asset} returned ${res.status} ${res.statusText}`);
+          } else {
+            // ok
+          }
+        } catch (err) {
+          console.error(`Asset check error for ${asset}:`, err);
+        }
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const audio = new Audio("/music.mp3");
@@ -385,7 +441,9 @@ export default function App() {
     if (!audio) return;
     if (!audio.paused) return;
     audio.currentTime = 0;
-    void audio.play().catch(() => {});
+    void audio.play().catch(() => {
+      // ignore play errors (browsers may block autoplay)
+    });
   }, []);
 
   const typingComplete = currentLineIndex >= TYPED_LINES.length;
@@ -398,13 +456,8 @@ export default function App() {
     });
   }, [currentCharIndex, currentLineIndex, typingComplete]);
 
-  const cursorLineIndex = typingComplete
-    ? Math.max(typedLines.length - 1, 0)
-    : currentLineIndex;
-  const cursorTargetIndex = Math.max(
-    Math.min(cursorLineIndex, typedLines.length - 1),
-    0
-  );
+  const cursorLineIndex = typingComplete ? Math.max(typedLines.length - 1, 0) : currentLineIndex;
+  const cursorTargetIndex = Math.max(Math.min(cursorLineIndex, typedLines.length - 1), 0);
 
   useEffect(() => {
     if (!hasStarted) {
@@ -435,10 +488,7 @@ export default function App() {
       }
 
       let nextLineIndex = currentLineIndex + 1;
-      while (
-        nextLineIndex < TYPED_LINES.length &&
-        TYPED_LINES[nextLineIndex].length === 0
-      ) {
+      while (nextLineIndex < TYPED_LINES.length && TYPED_LINES[nextLineIndex].length === 0) {
         nextLineIndex += 1;
       }
 
@@ -447,13 +497,7 @@ export default function App() {
     }, TYPED_CHAR_DELAY);
 
     return () => window.clearTimeout(handle);
-  }, [
-    hasStarted,
-    currentCharIndex,
-    currentLineIndex,
-    typingComplete,
-    sceneStarted,
-  ]);
+  }, [hasStarted, currentCharIndex, currentLineIndex, typingComplete, sceneStarted]);
 
   useEffect(() => {
     const handle = window.setInterval(() => {
@@ -488,67 +532,61 @@ export default function App() {
   const isScenePlaying = hasStarted && sceneStarted;
 
   return (
-    <div className="App">
-      <div
-        className="background-overlay"
-        style={{ opacity: backgroundOpacity }}
-      >
-        <div className="typed-text">
-          {typedLines.map((line, index) => {
-            const showCursor =
-              cursorVisible &&
-              index === cursorTargetIndex &&
-              (!typingComplete || !sceneStarted);
-            return (
-              <span className="typed-line" key={`typed-line-${index}`}>
-                {line || "\u00a0"}
-                {showCursor && (
-                  <span aria-hidden="true" className="typed-cursor">
-                    _
-                  </span>
-                )}
-              </span>
-            );
-          })}
+    <ErrorBoundary>
+      <div className="App">
+        <div className="background-overlay" style={{ opacity: backgroundOpacity }}>
+          <div className="typed-text">
+            {typedLines.map((line, index) => {
+              const showCursor = cursorVisible && index === cursorTargetIndex && (!typingComplete || !sceneStarted);
+              return (
+                <span className="typed-line" key={`typed-line-${index}`}>
+                  {line || "\u00a0"}
+                  {showCursor && (
+                    <span aria-hidden="true" className="typed-cursor">
+                      _
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
         </div>
+
+        {hasAnimationCompleted && isCandleLit && <div className="hint-overlay">press space to blow out the candle</div>}
+
+        <Canvas gl={{ alpha: true }} style={{ background: "transparent" }} onCreated={({ gl }) => gl.setClearColor("#000000", 0)}>
+          <Suspense fallback={<Html center><div style={{color: "white"}}>Loading scene...</div></Html>}>
+            <AnimatedScene
+              isPlaying={isScenePlaying}
+              candleLit={isCandleLit}
+              onBackgroundFadeChange={setBackgroundOpacity}
+              onEnvironmentProgressChange={setEnvironmentProgress}
+              onAnimationComplete={() => setHasAnimationCompleted(true)}
+              cards={BIRTHDAY_CARDS}
+              activeCardId={activeCardId}
+              onToggleCard={handleCardToggle}
+            />
+
+            {/* brighter lights for HDR/dark backgrounds */}
+            <ambientLight intensity={(1 - environmentProgress) * 1.2} />
+            <directionalLight intensity={0.8} position={[2, 10, 0]} color={[1, 0.95, 0.9]} />
+            <spotLight intensity={0.5} position={[0, 5, 5]} angle={Math.PI / 6} penumbra={0.3} />
+
+            {/* keep using the absolute public path (root-relative) */}
+            <Environment
+              files={["/shanghai_bund_4k.hdr"]}
+              backgroundRotation={[0, 3.3, 0]}
+              environmentRotation={[0, 3.3, 0]}
+              background
+              environmentIntensity={0.5 * environmentProgress}
+              backgroundIntensity={0.3 * environmentProgress}
+            />
+            <EnvironmentBackgroundController intensity={0.3 * environmentProgress} />
+            <Fireworks isActive={fireworksActive} origin={[0, 10, 0]} />
+            <ConfiguredOrbitControls />
+          </Suspense>
+        </Canvas>
       </div>
-      {hasAnimationCompleted && isCandleLit && (
-        <div className="hint-overlay">press space to blow out the candle</div>
-      )}
-      <Canvas
-        gl={{ alpha: true }}
-        style={{ background: "transparent" }}
-        onCreated={({ gl }) => {
-          gl.setClearColor("#000000", 0);
-        }}
-      >
-        <Suspense fallback={null}>
-          <AnimatedScene
-            isPlaying={isScenePlaying}
-            candleLit={isCandleLit}
-            onBackgroundFadeChange={setBackgroundOpacity}
-            onEnvironmentProgressChange={setEnvironmentProgress}
-            onAnimationComplete={() => setHasAnimationCompleted(true)}
-            cards={BIRTHDAY_CARDS}
-            activeCardId={activeCardId}
-            onToggleCard={handleCardToggle}
-          />
-          <ambientLight intensity={(1 - environmentProgress) * 1.2} />
-          <directionalLight intensity={0.8} position={[2, 10, 0]} color={[1, 0.95, 0.9]} />
-          <spotLight intensity={0.5} position={[0, 5, 5]} angle={Math.PI / 6} penumbra={0.3} />
-          <Environment
-            files={["/shanghai_bund_4k.hdr"]}
-            backgroundRotation={[0, 3.3, 0]}
-            environmentRotation={[0, 3.3, 0]}
-            background
-            environmentIntensity={0.5 * environmentProgress}
-            backgroundIntensity={0.3 * environmentProgress}
-          />
-          <EnvironmentBackgroundController intensity={0.3 * environmentProgress} />
-          <Fireworks isActive={fireworksActive} origin={[0, 10, 0]} />
-          <ConfiguredOrbitControls />
-        </Suspense>
-      </Canvas>
-    </div>
+    </ErrorBoundary>
   );
 }
