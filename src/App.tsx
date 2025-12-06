@@ -1,7 +1,6 @@
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Group } from "three";
 import { Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Cake } from "./models/cake";
@@ -96,7 +95,17 @@ function ConfiguredOrbitControls() {
     }
   }, [camera]);
 
-  return <OrbitControls ref={controlsRef} enableDamping dampingFactor={0.05} minDistance={ORBIT_MIN_DISTANCE} maxDistance={ORBIT_MAX_DISTANCE} minPolarAngle={ORBIT_MIN_POLAR} maxPolarAngle={ORBIT_MAX_POLAR} />;
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enableDamping
+      dampingFactor={0.05}
+      minDistance={ORBIT_MIN_DISTANCE}
+      maxDistance={ORBIT_MAX_DISTANCE}
+      minPolarAngle={ORBIT_MIN_POLAR}
+      maxPolarAngle={ORBIT_MAX_POLAR}
+    />
+  );
 }
 
 // -------------------
@@ -176,8 +185,6 @@ export default function App() {
   }, [hasStarted, sceneStarted, isCandleLit, playBackgroundMusic]);
 
   const handleCardToggle = useCallback((id: string) => setActiveCardId((current) => (current === id ? null : id)), []);
-
-  const isScenePlaying = hasStarted && sceneStarted;
 
   return (
     <ErrorBoundary>
