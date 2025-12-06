@@ -6,15 +6,12 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Cake } from "./models/cake";
 import { Candle } from "./models/candle";
 import { Table } from "./models/table";
-import { SimplePictureFrame } from "./models/simplePictureFrame"; // CHANGED
+import { SimplePictureFrame } from "./models/simplePictureFrame";
 import { BirthdayCard } from "./components/BirthdayCard";
 import { Fireworks } from "./components/Fireworks";
 
 import "./App.css";
 
-// -------------------
-// Error Boundary
-// -------------------
 class ErrorBoundary extends React.Component
   { children: React.ReactNode },
   { hasError: boolean }
@@ -37,9 +34,6 @@ class ErrorBoundary extends React.Component
   }
 }
 
-// -------------------
-// Constants
-// -------------------
 const ORBIT_TARGET = new Vector3(0, 1, 0);
 const ORBIT_INITIAL_RADIUS = 3;
 const ORBIT_INITIAL_HEIGHT = 1;
@@ -73,9 +67,6 @@ const BIRTHDAY_CARDS: BirthdayCardConfig[] = [
   { id: "confetti", image: "/card.png", position: [1, 0.081, -2], rotation: [-Math.PI / 2, 0, Math.PI / 3] }
 ];
 
-// -------------------
-// OrbitControls wrapper
-// -------------------
 function ConfiguredOrbitControls() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const camera = useThree((state) => state.camera);
@@ -108,9 +99,6 @@ function ConfiguredOrbitControls() {
   );
 }
 
-// -------------------
-// Main App
-// -------------------
 export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
@@ -148,7 +136,6 @@ export default function App() {
 
   const cursorLineIndex = typingComplete ? Math.max(typedLines.length - 1, 0) : currentLineIndex;
 
-  // Typing effect
   useEffect(() => {
     if (!hasStarted) return;
     if (typingComplete && !sceneStarted) {
@@ -166,13 +153,11 @@ export default function App() {
     return () => window.clearTimeout(handle);
   }, [hasStarted, currentCharIndex, currentLineIndex, typingComplete, sceneStarted]);
 
-  // Cursor blink
   useEffect(() => {
     const handle = window.setInterval(() => setCursorVisible((prev) => !prev), CURSOR_BLINK_INTERVAL);
     return () => window.clearInterval(handle);
   }, []);
 
-  // Spacebar logic
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" && event.key !== " ") return;
@@ -189,7 +174,6 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="App">
-        {/* CHANGED: Added fade-out class */}
         <div className={`background-overlay ${sceneStarted ? 'fade-out' : ''}`}>
           <div className="typed-text">
             {typedLines.map((line, index) => {
@@ -205,8 +189,6 @@ export default function App() {
                 <Table />
                 <Cake />
                 <Candle isLit={isCandleLit} scale={0.25} position={[0, 1.1, 0]} />
-                
-                {/* CHANGED: Using SimplePictureFrame - 4 frames on table */}
                 <SimplePictureFrame 
                   image="/frame1.jpg" 
                   position={[-0.8, 1.2, -0.5]}
@@ -239,7 +221,6 @@ export default function App() {
                   frameWidth={1}
                   frameHeight={0.75}
                 />
-                
                 {BIRTHDAY_CARDS.map((card) => (
                   <BirthdayCard
                     key={card.id}
